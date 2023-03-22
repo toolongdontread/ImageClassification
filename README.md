@@ -1,5 +1,5 @@
 # ImageClassification
-This is a CNN model and aims to specify 20 classes of cars. Of course it can specify the other things. But you have to use the ```train.py``` to train your own data. Otherwise, just simply use the ```trained_model.h5``` for classification. 
+This is a CNN model and aims to specify 20 classes of cars. Of course it can specify other things. But you have to use the ```train.py``` to train your own data. Otherwise, just simply use the ```trained_model.h5``` for classification. 
 
 ## Preparation
 1. Install python to your PC (Remember to add it to PATH)
