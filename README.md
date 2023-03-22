@@ -8,7 +8,7 @@ This is a CNN model and aims to specify 20 classes of cars. Of course it can spe
 ## Default dataset
 There are 20 classes of cars in the folder 'DATA'. Please enlarge it if necessary
 
-## train.py
+## ```train.py```
 This is the python file for model training
 
 There is also a validation set inside
@@ -17,13 +17,15 @@ VS Code: Just simply click the 'Run' button on the VS Code
 
 Terminal: Type ```python train.py```
 
-## test.py
+## ```test.py```
 This is the python file for testing the model accuracy
+### How to run
+Type ```python test.py 'dataset_path model_path output_path'```
 
-## result.txt
+## ```result.txt```
 This is a text file which stores the test loss and test accuracy
 
-## trained_model.h5
+## ```trained_model.h5```
 This is a pre-trained model
 
 The average accuracy now is 79%.
