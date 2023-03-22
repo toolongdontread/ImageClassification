@@ -1,5 +1,5 @@
 # ImageClassification-CarModel
-This model can specify 20 classes of cars. The average accuracy now is 79%.
+This is a CNN model and aims to specify 20 classes of cars. Of course it can specify the other things. But you have to use the ```train.py``` to train your own data. Otherwise, just simply use the ```trained_model``` for classification. 
 
 ## Preparation
 1. Install python to your PC (Remember to add it to PATH)
@@ -22,3 +22,11 @@ This is the python file for testing the model accuracy
 
 ## result.txt
 This is a text file which stores the test loss and test accuracy
+
+## trained_model.h5
+This is a pre-trained model
+
+The average accuracy now is 79%.
+
+## Disclaimer
+The model is still under development. We cannot ensure that all programs are error-free. YOU HAVE TO TAKE YOUR OWN RISK while using our programs.
