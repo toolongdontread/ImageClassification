@@ -1,5 +1,5 @@
 # ImageClassification
-This is a CNN model aims to specify 20 classes of cars. Of course it can specify other things. But you have to use the ```train.py``` to train your own data. Otherwise, just simply use the ```trained_model.h5``` for classification. 
+This is a CNN model aims to specify 20 classes of cars. Of course it can specify other things. But you have to use the ```train2.py``` to train your own data. Otherwise, just simply use the ```trained_model2.h5``` for classification. 
 
 ## Preparation
 1. Install python to your PC (Remember to add it to PATH)
@@ -8,7 +8,7 @@ This is a CNN model aims to specify 20 classes of cars. Of course it can specify
 ## Default dataset
 There are 20 classes of cars in the folder 'DATA'. Please enlarge it if necessary
 
-## ```train.py```
+## ```train2.py```
 This is the python file for model training
 
 There is also a validation set inside
@@ -25,10 +25,10 @@ Type ```python test.py dataset_path model_path output_path```
 ## ```result.txt```
 This is a text file which stores the test loss and test accuracy
 
-## ```trained_model.h5```
+## ```trained_model2.h5```
 This is a pre-trained model
 
-The average accuracy now is 79%.
+The average accuracy now is 87%.
 
 ## Disclaimer
 The model is still under development. We cannot ensure that all programs are error-free. YOU HAVE TO TAKE YOUR OWN RISK while using our programs.
