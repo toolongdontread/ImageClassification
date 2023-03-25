@@ -21,6 +21,10 @@ from sklearn.metrics import classification_report
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
+IMG_WIDTH = 112
+IMG_HEIGHT = 112
+BATCH_SIZE = 16
+
 def create_arg_parser(): 
     parser = argparse.ArgumentParser()
     # test data folder
@@ -37,47 +41,24 @@ def create_arg_parser():
                         help='Output Path')                                         
     return parser
 
-# the test data will be import as a folder, 
-# so we need to create a function to read the images in that folder
-'''
-  def load_images_from_folder(folder):
-      images = []
-      for filename in os.listdir(folder):
-          img = cv2.imread(os.path.join(folder,filename))
-          if img is not None:
-              images.append(img)
-  
-      return images
-'''
-# all the images inside the folder will be display once
-'''
-  def display_images_from_folder(folder):
-      for img in os.listdir(folder):
-          img = mpimg.imread(folder + '/' + img)
-          imgplot = plt.imshow(img)
-          plt.show()
-'''
-
 # run the file in the cmd
 if __name__ == "__main__":                                                        
     parser = create_arg_parser()
     args = parser.parse_args(sys.argv[1:])
     
     test_dataset = args.data_path
-    
+    cnn_model = tf.keras.models.load_model(args.model_path)
+
     # test
-    test_datagen = ImageDataGenerator()
-
-    IMG_WIDTH = 112
-    IMG_HEIGHT = 112
-    BATCH_SIZE = 32
-
-    cnn_model = tf.keras.models.load_model(args.model_path)    
+    test_datagen = ImageDataGenerator(horizontal_flip=True,
+                                       zca_whitening=True,
+                                       brightness_range=(0.8,1),
+                                       channel_shift_range=60)
     test_generator = test_datagen.flow_from_directory(test_dataset,
-                                                    shuffle=False,
                                                     batch_size=BATCH_SIZE,
                                                     target_size=(IMG_WIDTH, IMG_HEIGHT),
-                                                    class_mode='categorical')
+                                                    color_mode='rgb')
+
     predictions = cnn_model.predict(test_generator)
     fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(12, 10))
     idx = 0
@@ -112,6 +93,7 @@ if __name__ == "__main__":
     # print out the report
     print(classification_report(y_true, y_pred, target_names=labels.values()))
     
+    '''
     # print out some wrong predictions
     errors = (y_true - y_pred != 0)
     y_true_errors = y_true[errors]
@@ -139,3 +121,4 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.suptitle('Wrong Predictions made on test set', fontsize=20)
     plt.show()
+    '''
