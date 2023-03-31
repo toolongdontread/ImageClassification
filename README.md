@@ -28,7 +28,7 @@ This is a text file which stores the test loss and test accuracy
 ## ```trained_model2.h5```
 This is a pre-trained model
 
-The average accuracy now is 87%.
+The average accuracy now is 88%.
 
 ## Disclaimer
 The model is still under development. We cannot ensure that all programs are error-free. YOU HAVE TO TAKE YOUR OWN RISK while using our programs.
