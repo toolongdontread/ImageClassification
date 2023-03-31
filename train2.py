@@ -11,7 +11,7 @@ from sklearn.metrics import confusion_matrix, classification_report
 
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Activation, BatchNormalization, Conv2D, Dense, Flatten, MaxPooling2D
+from tensorflow.keras.layers import BatchNormalization, Conv2D, Dense, Flatten, MaxPooling2D
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import CategoricalCrossentropy
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     IMG_SIZE = 112
     BATCH_SIZE = 8
-    EPOCH = 40 # 20 is ard stability
+    EPOCH = 25 # 20 is ard stability
     LR = 0.0003
 
     train_dataset_path = './data/train'
@@ -37,23 +37,27 @@ if __name__ == '__main__':
 
     train_datagen = ImageDataGenerator(horizontal_flip=True,
                                        zca_whitening=True,
+                                       rescale=1/255,
                                        brightness_range=(0.8,1),
                                        channel_shift_range=60,
                                        featurewise_std_normalization=True)
     train_generator = train_datagen.flow_from_directory(train_dataset_path,
                                                         target_size=(IMG_SIZE, IMG_SIZE),
                                                         batch_size=BATCH_SIZE,
-                                                        color_mode="rgb")
+                                                        color_mode="rgb",
+                                                        shuffle=True)
 
     validation_datagen = ImageDataGenerator(horizontal_flip=True,
                                             zca_whitening=True,
                                             brightness_range=(0.8,1),
                                             channel_shift_range=60,
-                                            featurewise_std_normalization=True)
+                                            featurewise_std_normalization=True,
+                                            rescale=1/255)
     validation_generator = validation_datagen.flow_from_directory(validation_dataset_path,
                                                                   target_size=(IMG_SIZE, IMG_SIZE),
                                                                   batch_size=BATCH_SIZE,
-                                                                  color_mode="rgb")
+                                                                  color_mode="rgb",
+                                                                  shuffle=False)
     
     # train_generator & validation_generator is a 5-d array
     # array structure as follows:
@@ -97,29 +101,24 @@ if __name__ == '__main__':
 ####################################################################################################
 # model building
     cnn_model = Sequential([
-        Conv2D(filters=64, kernel_size=(5, 5), padding='valid', input_shape=(IMG_SIZE, IMG_SIZE, 3)), # change 3 according to color-mode
-        Activation('relu'),
-        MaxPooling2D(pool_size=(2, 2), padding='valid'),
+        Conv2D(filters=64, kernel_size=(5), padding='valid', input_shape=(IMG_SIZE, IMG_SIZE, 3), activation='relu'), # change 3 according to color-mode
+        MaxPooling2D(pool_size=(3, 3), padding='valid'),
         BatchNormalization(),
         
-        Conv2D(filters=256, kernel_size=(3, 3), padding='valid', kernel_regularizer=l2(0.00005)),
-        Activation('relu'),
+        Conv2D(filters=256, kernel_size=(3), padding='valid', kernel_regularizer=l2(0.00005), activation='relu'),
         MaxPooling2D(pool_size=(2, 2)),
         BatchNormalization(),
     
-        Conv2D(filters=256, kernel_size=(3, 3), padding='valid', kernel_regularizer=l2(0.00005)),
-        Activation('relu'),
+        Conv2D(filters=256, kernel_size=(3), padding='valid', kernel_regularizer=l2(0.00005), activation='relu'),
         MaxPooling2D(pool_size=(2, 2)),
         BatchNormalization(),
 
-        Conv2D(filters=256, kernel_size=(3, 3), padding='valid', kernel_regularizer=l2(0.00005)),
-        Activation('relu'),
+        Conv2D(filters=256, kernel_size=(3), padding='valid', kernel_regularizer=l2(0.00005), activation='relu'),
         MaxPooling2D(pool_size=(2, 2)),
         BatchNormalization(),
         
-
         Flatten(),
-        Dense(units=256,activation='relu'),
+        Dense(units=128,activation='relu'),
         Dense(units=128, activation='sigmoid'),
         Dense(units=20, activation='softmax')
     ])
@@ -135,9 +134,11 @@ if __name__ == '__main__':
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.9, patience=5)
     optimizer = Adam(learning_rate=LR)
     cnn_model.compile(optimizer=optimizer, loss=CategoricalCrossentropy(), metrics=['accuracy'])
-    history = cnn_model.fit(train_generator, epochs=EPOCH, validation_data=validation_generator,
-                        verbose=1,
-                        callbacks=[reduce_lr])
+    history = cnn_model.fit(train_generator, 
+                            epochs=EPOCH, 
+                            validation_data=validation_generator,
+                            verbose=1,
+                            callbacks=[reduce_lr])
     
 ####################################################################################################
 # data presentation (final result)
