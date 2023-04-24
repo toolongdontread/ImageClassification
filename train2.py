@@ -1,3 +1,6 @@
+# improved:
+# featurewise_center=True, featurewise_std_normalization=True
+####################################################################################################
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -8,28 +11,39 @@ import warnings
 warnings.filterwarnings('ignore')
 
 from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.model_selection import KFold, StratifiedKFold
 
 import tensorflow as tf
+from tensorflow.keras import datasets, layers, models
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import BatchNormalization, Conv2D, Dense, Flatten, MaxPooling2D
+from tensorflow.keras.layers import Activation, BatchNormalization, Conv2D, Dense, Flatten, MaxPooling2D, Dropout
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import CategoricalCrossentropy
-from tensorflow.keras.regularizers import l2
-from tensorflow.keras.callbacks import ReduceLROnPlateau
+from tensorflow.keras.regularizers import l2, L1L2
+from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
 
+
+
+from tensorflow.keras.applications import ResNet50
+
+from tensorflow.keras.applications.vgg16 import VGG16
+from tensorflow.keras.applications.vgg19 import VGG19
+
+import tensorflow as tf
+print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 ####################################################################################################
 # (most of the) parameters and hyperparameters 
 
 if __name__ == '__main__':
 
-    IMG_SIZE = 112
+    IMG_SIZE = 224
     BATCH_SIZE = 8
-    EPOCH = 25 # 20 is ard stability
-    LR = 0.0003
+    EPOCH = 40 # 20 is ard stability
+    LR = 0.0002
 
-    train_dataset_path = './data/train'
-    validation_dataset_path = './data/val'
+    train_dataset_path = './csbh_data/train'
+    validation_dataset_path = './csbh_data/val'
     #test_path will move so not put here 
 
 ####################################################################################################
@@ -37,27 +51,21 @@ if __name__ == '__main__':
 
     train_datagen = ImageDataGenerator(horizontal_flip=True,
                                        zca_whitening=True,
-                                       rescale=1/255,
-                                       brightness_range=(0.8,1),
-                                       channel_shift_range=60,
-                                       featurewise_std_normalization=True)
+                                       zca_epsilon=1e-07,
+                                       rescale=1/255,zoom_range=[0.7,1.1])
     train_generator = train_datagen.flow_from_directory(train_dataset_path,
                                                         target_size=(IMG_SIZE, IMG_SIZE),
                                                         batch_size=BATCH_SIZE,
-                                                        color_mode="rgb",
-                                                        shuffle=True)
+                                                        color_mode="rgb")
 
     validation_datagen = ImageDataGenerator(horizontal_flip=True,
                                             zca_whitening=True,
-                                            brightness_range=(0.8,1),
-                                            channel_shift_range=60,
-                                            featurewise_std_normalization=True,
-                                            rescale=1/255)
+                                            zca_epsilon=1e-07,
+                                            rescale=1/255,zoom_range=[0.7,1.1])
     validation_generator = validation_datagen.flow_from_directory(validation_dataset_path,
                                                                   target_size=(IMG_SIZE, IMG_SIZE),
                                                                   batch_size=BATCH_SIZE,
-                                                                  color_mode="rgb",
-                                                                  shuffle=False)
+                                                                  color_mode="rgb")
     
     # train_generator & validation_generator is a 5-d array
     # array structure as follows:
@@ -72,7 +80,7 @@ if __name__ == '__main__':
  #################################################################################################### 
  # sample image display (for better understanding of data preprocessing)
  
-    """
+    
     labels = {value: key for key, value in train_generator.class_indices.items()}
     print("Label Mappings for classes present in the training and validation datasets\n")
     # for function to run, ROW x COL must be <= BATCH_SIZE
@@ -96,49 +104,52 @@ if __name__ == '__main__':
     plt.tight_layout()
     plt.suptitle("Sample Training Images", fontsize=20)
     plt.show()
-    """
+    
     
 ####################################################################################################
 # model building
-    cnn_model = Sequential([
-        Conv2D(filters=64, kernel_size=(5), padding='valid', input_shape=(IMG_SIZE, IMG_SIZE, 3), activation='relu'), # change 3 according to color-mode
-        MaxPooling2D(pool_size=(3, 3), padding='valid'),
-        BatchNormalization(),
-        
-        Conv2D(filters=256, kernel_size=(3), padding='valid', kernel_regularizer=l2(0.00005), activation='relu'),
-        MaxPooling2D(pool_size=(2, 2)),
-        BatchNormalization(),
-    
-        Conv2D(filters=256, kernel_size=(3), padding='valid', kernel_regularizer=l2(0.00005), activation='relu'),
-        MaxPooling2D(pool_size=(2, 2)),
-        BatchNormalization(),
+    """
+    base_model = VGG19(input_shape = (IMG_SIZE, IMG_SIZE, 3),
+    include_top = False,
+    weights = 'imagenet')
 
-        Conv2D(filters=256, kernel_size=(3), padding='valid', kernel_regularizer=l2(0.00005), activation='relu'),
-        MaxPooling2D(pool_size=(2, 2)),
-        BatchNormalization(),
+    for layer in base_model.layers:
+        layer.trainable = False
         
-        Flatten(),
-        Dense(units=128,activation='relu'),
-        Dense(units=128, activation='sigmoid'),
-        Dense(units=20, activation='softmax')
-    ])
+    x = layers.Dropout(0.2)(base_model.output) 
+    x = layers.GlobalMaxPooling2D()(x) #instead of flatten
     
+    x = layers.Dense(256, activation='relu')(x)
+    x = layers.Dense(128, activation='sigmoid')(x)
+    x = layers.Dense(20, activation='softmax')(x)
+
+    cnn_model = tf.keras.models.Model(base_model.input, x)
+    cnn_model.summary()
     """
-    # for better understanding of model building
-    print(cnn_model.summary())
-    """
-    
+
+    #"""
+    base_model = ResNet50(weights="imagenet", include_top=False, input_shape=(IMG_SIZE, IMG_SIZE, 3))
+    cnn_model = models.Sequential()
+    cnn_model.add(base_model)
+    cnn_model.add(layers.Dropout(0.25))
+    cnn_model.add(layers.GlobalMaxPooling2D(name="gmax"))
+    cnn_model.add(layers.Dense(256, activation="relu", name="relu"))
+    cnn_model.add(layers.Dense(128, activation="sigmoid", name="sigmoid"))
+    cnn_model.add(layers.Dense(20, activation="softmax", name="softmax"))
+    base_model.trainable = True
+
+    cnn_model.summary()
+    #"""
 ####################################################################################################
 # model implementation
 
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.9, patience=5)
-    optimizer = Adam(learning_rate=LR)
-    cnn_model.compile(optimizer=optimizer, loss=CategoricalCrossentropy(), metrics=['accuracy'])
-    history = cnn_model.fit(train_generator, 
-                            epochs=EPOCH, 
-                            validation_data=validation_generator,
-                            verbose=1,
-                            callbacks=[reduce_lr])
+    es = EarlyStopping(monitor='val_accuracy', mode='max', min_delta=0.01, patience=5)
+
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=5)
+    cnn_model.compile(optimizer=Adam(learning_rate=LR), loss=CategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
+    history = cnn_model.fit(train_generator, epochs=EPOCH, shuffle=True, validation_data=validation_generator,
+                        verbose=1,
+                        callbacks=[reduce_lr]) #, es
     
 ####################################################################################################
 # data presentation (final result)
@@ -175,6 +186,4 @@ if __name__ == '__main__':
     plt.tight_layout()
     plt.show()
     #"""
-    cnn_model.save('./trained_model2.h5')
-    print('model saved!')
-    
+    cnn_model.save('./model/trained_model.h5')
