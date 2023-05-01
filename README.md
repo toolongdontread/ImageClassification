@@ -32,4 +32,4 @@ This is a text file which stores the test loss and test accuracy.
 After running the ```train2.py```, a folder named ```model``` will be generated. You can find the trained model inside.
 
 ## Disclaimer
-The model is still under development. We cannot ensure that all programs are error-free. YOU HAVE TO TAKE YOUR OWN RISK while using our programs!
+We cannot ensure that the program is error-free. YOU HAVE TO TAKE YOUR OWN RISK while using our programs!
