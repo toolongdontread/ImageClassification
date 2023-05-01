@@ -1,5 +1,5 @@
 # ImageClassification
-This is a CNN model aims to specify 20 classes of cars. Of course it can specify other things. But you have to use the ```train2.py``` to train your own data. 
+This is a CNN model which aims to specify 20 classes of cars. Of course it can specify other things. But you have to use the ```train2.py``` to train your own data. 
 
 ## Preparation
 1. Install python to your PC (Remember to add it to PATH)
